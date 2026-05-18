@@ -20,13 +20,7 @@ def div(a: float, b: float) -> float:
     return a / b
 
 
-def mod(a: float, b: float) -> float:
-    if b == 0:
-        raise ValueError("modulo by zero")
-    return a % b
-
-
-OPS = {"add": add, "sub": sub, "mul": mul, "div": div, "mod": mod}
+OPS = {"add": add, "sub": sub, "mul": mul, "div": div}
 
 
 def main(argv: list[str]) -> int:

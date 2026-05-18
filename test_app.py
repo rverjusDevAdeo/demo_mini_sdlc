@@ -1,7 +1,7 @@
 """Unit tests for the mini calculator."""
 import pytest
 
-from app import add, sub, mul, div, mod
+from app import add, sub, mul, div
 
 
 def test_add():
@@ -23,12 +23,3 @@ def test_div():
 def test_div_by_zero_raises():
     with pytest.raises(ValueError, match="division by zero"):
         div(1, 0)
-
-
-def test_mod():
-    assert mod(10, 3) == 1
-
-
-def test_mod_by_zero_raises():
-    with pytest.raises(ValueError, match="modulo by zero"):
-        mod(1, 0)
