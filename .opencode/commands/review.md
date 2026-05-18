@@ -17,6 +17,7 @@ Level 2 (Workflow Prompt).
 ## Instructions
 
 - Do NOT edit any source file. Reading only.
+- Do NOT run any git-mutating command: no `git commit`, `git add`, `git stash`, `git reset`, `git checkout <paths>`, `git restore`, `git rm`, `git tag`, `git push`. Read-only git inspection (`git diff`, `git status`, `git log`) is fine.
 - A blocker is anything that means the spec's intent is not realized: a missing step, a wrong behavior, a missing/incorrect test, or a scope violation.
 - A nit is a non-blocker: style, naming, dead code, missing comment where the spec asked for one.
 - The verdict line must be parseable by the orchestrator — keep the exact format.

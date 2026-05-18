@@ -44,6 +44,17 @@ This is a Level 3 (Control Flow) orchestrator: sequential phases plus declared l
 1. Read `.opencode/commands/implement.md`.
 2. Apply with `plan_path`. The playbook modifies `app.py` and/or `test_app.py` per the spec.
 
+### PHASE 3.5 — INJECT BUG (demo only)
+
+> **Purpose:** deliberately break the code so PHASE 4's fix-loop has something to recover from. This step is artificial — it exists to demonstrate that `<test-fix-loop>` actually works end-to-end. Remove this phase for any non-demo run.
+
+1. Print the banner `══════ PHASE 3.5 : INJECT BUG (demo) ══════`.
+2. Read `app.py`.
+3. Pick an **existing, stable** function — NOT one that was just added or modified by PHASE 3. Prefer a simple arithmetic helper (e.g. `add`, `subtract`, `multiply`).
+4. Apply a single-character mutation that is guaranteed to make at least one existing test in `test_app.py` fail. Examples: flip `+` → `-`, `*` → `/`, `==` → `!=`, or change a return value by one (`return a + b` → `return a + b + 1`).
+5. Do **not** modify `test_app.py` — tests are the source of truth; the loop must heal the code, not the spec.
+6. Print a one-line summary: `BUG INJECTED — <file>:<line> <old> → <new>` so the demo viewer can correlate the failure in PHASE 4.
+
 ### PHASE 4 — TEST (fix-loop)
 
 Initialize `test_iter = 0`.
@@ -67,6 +78,8 @@ Initialize `test_iter = 0`.
 </test-fix-loop>
 
 ### PHASE 5 — REVIEW (patch-loop)
+
+> **No commits in this phase.** The review playbook itself is read-only. The orchestrator MUST NOT run any git-mutating command during this phase (no `git commit`, `git add`, `git stash`, `git reset`, `git checkout <paths>`, `git restore`). The only writes allowed are `Edit` calls to `app.py` / `test_app.py` to address blockers.
 
 Initialize `review_iter = 0`.
 
