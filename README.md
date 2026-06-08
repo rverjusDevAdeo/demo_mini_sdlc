@@ -251,7 +251,120 @@ Phase 1 routes on the ticket's verb:
 
 ---
 
-## 6. What this folder is NOT
+## 6. Going further — add agents & skills, watch the impact (try it yourself!)
+
+This demo runs with **one default agent** and **no skills**: every phase is steered purely by its command. The natural next step — and a great exercise — is to bring in the other two opencode blocks and **observe how they change the result**. Nothing below is wired into the repo on purpose: **it's a guided playground for you to build.**
+
+> Recall: a **Command** = WHAT, an **Agent** = WHO, a **Skill** = HOW. Right now we only use the WHAT. Let's add the WHO and the HOW.
+
+### Step 1 — give each command a specialist agent (the WHO)
+
+The commands are already split by responsibility (SRP). Give each one a matching agent under `.opencode/agents/`, with permissions that *enforce* that responsibility. Create the folder, then one Markdown file per role:
+
+```markdown
+---
+description: Builder — implements a spec into app.py / test_app.py.
+mode: subagent
+permission:
+  edit: allow        # may change code
+  bash: allow        # may run pytest
+  webfetch: deny
+  skill:
+    clean-code: allow      # ← allowed to use the skills from Step 2
+    add-docstrings: allow
+    object-oriented: allow
+---
+
+You are a **developer**. You implement a spec faithfully and never re-scope it.
+Always apply the `clean-code` and `add-docstrings` skills to the code you write.
+```
+
+A sensible set of agents, one per command — note how **permissions encode the SRP**:
+
+| Agent | For command(s) | `edit` | `bash` | Why |
+|---|---|---|---|---|
+| `classifier` | `/classify_issue` | deny | deny | triage only — must not even read the code |
+| `planner` | `/feature` `/bug` `/chore` | allow* | deny | writes the spec file only, never runs anything |
+| `developer` | `/implement` | allow | allow | edits code, runs validation |
+| `tester` | `/test` | **deny** | allow | runs pytest but **cannot edit** — observation only |
+| `reviewer` | `/review` | **deny** | allow | read-only judge: git diff yes, edits no |
+| `documenter` | `/document` | allow | deny | touches the README only |
+
+<sub>*`allow` so it can write the spec; the command body restricts it to `specs/`.</sub>
+
+Then **wire each command to its agent** by adding one line to the command's frontmatter — exactly like `demo-presenter` in part 1:
+
+```diff
+  ---
+  description: "Implement a spec file produced by /feature, /bug or /chore"
++ agent: developer
+  ---
+```
+
+> 💡 The `tester` and `reviewer` agents deny `edit` on purpose. That's the SRP made **unbreakable**: even if the prompt drifts, the agent *physically cannot* modify code during test or review. The permission system turns a convention into a guarantee.
+
+### Step 2 — add code-style skills (the HOW)
+
+Skills change *how* the output looks without touching *what* the command asks for. Add three under `.opencode/skills/`, each as `<name>/SKILL.md`:
+
+```markdown
+---
+name: clean-code
+description: >
+  Apply clean-code principles to any code you write. Use proactively when
+  implementing or refactoring: intention-revealing names, small functions,
+  no dead code, no magic numbers, early returns.
+---
+
+# Clean Code
+
+- Names reveal intent; no abbreviations.
+- One function = one job; keep them short.
+- No magic numbers — use named constants.
+- Prefer early returns over nested `if`.
+- Delete dead code and redundant comments.
+```
+
+Three skills worth creating:
+
+| Skill | What it changes | Expected visible impact on `app.py` |
+|---|---|---|
+| `add-docstrings` | adds a docstring to every function | each op gains a `"""…"""` describing it |
+| `clean-code` | naming, small functions, no magic numbers, early returns | tidier dispatch, named constants, clearer errors |
+| `object-oriented` | restructures into a class | `OPS` dict → a `Calculator` class with methods |
+
+Allow them on the agents that should use them (`developer` for all three; `reviewer` can be allowed `clean-code` to use as a **review rubric**).
+
+### Step 3 — run the experiment and compare results
+
+This is the payoff — the same A/B that part 1 shows (*1 command × different agents/skills = different output*). Run a single command **directly** (so opencode honors its `agent:` and the agent's skills), and diff the result:
+
+```bash
+# Baseline — no agent, no skill (today's behavior)
+/implement specs/spec-add-modulo-op.md
+git diff app.py        # plain function, no docstring
+
+# Reset, then run again with the developer agent + clean-code + add-docstrings
+git checkout app.py
+/implement specs/spec-add-modulo-op.md
+git diff app.py        # same behavior, but docstringed + cleaner
+```
+
+Toggle one skill at a time to isolate its effect — e.g. turn `object-oriented` on and watch `/implement` rewrite the calculator as a class (and watch the **`<test-fix-loop>` reconcile** the tests if the public API shifts: a perfect demonstration of the loop doing real work). The `sdlc-logger` trace records which agent ran and which skill was loaded, so you can **prove** what happened:
+
+```bash
+cat agents/sdlc_logs/<sessionId>/sdlc.jsonl   # see the skill tool-call + the resulting edits
+```
+
+### Step 4 (optional) — make the *whole pipeline* use the specialists
+
+Today `/run_sdlc` reads each playbook **inline** in one session, so it ignores the `agent:` frontmatter — the specialists only kick in when you run a command **directly**. To make the full orchestrated run use them, promote the orchestrator from **L3 (control flow)** to **L4 (delegation)**: replace each phase's *"read the playbook and apply it yourself"* with a **`task` call that delegates to the phase's agent** (e.g. `task(developer, "Run /implement <plan_path>")`). The loops stay in the orchestrator; only the work inside each step is delegated. This is exactly the orchestrator pattern from part 1's Demo 2.
+
+> 🧪 **The lesson to take away:** the *workflow* (the commands) stayed identical — you only changed **WHO** runs each step and **HOW** they write code, and the output changed. That's reusability: combine blocks instead of rewriting prompts.
+
+---
+
+## 7. What this folder is NOT
 
 No git ops, no GitHub integration, no PR creation, no persistent state files, no retries beyond the two bounded loops. It exists to demonstrate the **shape** of an SDLC workflow — orchestration, contracts between phases, feedback loops, observability — not to ship production code.
 
