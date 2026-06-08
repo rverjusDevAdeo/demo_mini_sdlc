@@ -257,6 +257,8 @@ This demo runs with **one default agent** and **no skills**: every phase is stee
 
 > Recall: a **Command** = WHAT, an **Agent** = WHO, a **Skill** = HOW. Right now we only use the WHAT. Let's add the WHO and the HOW.
 
+> 🌱 **Want a worked example?** A reference implementation of the `developer` agent (Step 1) lives on the **`use-developper-agent`** branch — `git checkout use-developper-agent` to see it wired up, or use it as a hint while building your own.
+
 ### Step 1 — give each command a specialist agent (the WHO)
 
 The commands are already split by responsibility (SRP). Give each one a matching agent under `.opencode/agents/`, with permissions that *enforce* that responsibility. Create the folder, then one Markdown file per role:
