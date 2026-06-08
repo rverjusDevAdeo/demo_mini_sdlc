@@ -1,5 +1,6 @@
 ---
 description: "Implement a spec file produced by /feature, /bug or /chore"
+agent: developer
 ---
 
 # Implement
